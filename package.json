@@ -1,0 +1,24 @@
+{
+  "name": "giphyxit",
+  "version": "1.0.0",
+  "description": "A web based version of the game Dixit with images from giphy.com",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alaxe/giphyXit.git"
+  },
+  "author": "Alexander Crustev",
+  "license": "",
+  "bugs": {
+    "url": "https://github.com/Alaxe/giphyXit/issues"
+  },
+  "homepage": "https://github.com/Alaxe/giphyXit#readme",
+  "dependencies": {
+    "ejs": "^2.4.1",
+    "express": "^4.13.4",
+    "ws": "^1.1.0"
+  }
+}
