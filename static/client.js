@@ -11,6 +11,7 @@ var curView = null,
     voteList = [];
 
 function setView(view) {
+    console.log('setting view %s', view);
     $('.view').hide();
     $('#' + view).show();
 
@@ -20,10 +21,14 @@ function setView(view) {
 function updatePlayers(newList) {
     playerList = newList;
 
-    var waitList = $('#waitView > #playerList');
+    var waitList = $('#playerList');
     waitList.empty();
     playerList.forEach(function(player) {
-        $('<li></li>').text(player.name).appendTo(waitList);
+        $('<li></li>')
+        .text(player.name)
+        .addClass('list-group-item')
+        .addClass((player.name === userName) ? 'active' : '')
+        .appendTo(waitList);
     });
 }
 
@@ -90,13 +95,16 @@ $(function() {
         $('#error').text('');
     });
 
-    $('#joinGame').click(function() {
+    $('#joinForm').submit(function() {
+        $('#error').text('');
         userName = $('#nameInput').val();
         if (userName == '') {
             $('#error').text('One needs an username');
         } else {
             connectWS();
         }
+        //makes sure the form isn't actually submited
+        return false;
     });
     $('#startGame').click(startGame);
 });

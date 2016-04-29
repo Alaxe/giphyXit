@@ -1,27 +1,72 @@
 <html>
     <head>
         <title>Playing giphyXit</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+        <style>
+        .panel-center {
+            max-width: 400px;
+            margin-top: 16px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        </style>
+
     </head>
     <body>
-        <div id="error"></div>
-        <div class="view" id="joinView" hidden>
-            <label for="nameInput">Your name</label>
-            <input type="text" id="nameInput"></input>
-            <button id="joinGame">Join</button>
-        </div>
-        <div class="view" id="waitView" hidden>
-            Players:
-            <ul id="playerList">
-            </ul>
-            <button id="startGame">Start</button>
-        </div>
-        <div class="view" id="playView" hidden>
-            This should be the game
+        <div class="container">
+            <div id="error"></div>
+
+            <div class="view" id="joinView" hidden>
+            <div class="panel panel-primary panel-center">
+
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        Enter a name
+                    </h3>
+                </div>
+                <div class="panel-body">
+                <form id="joinForm">
+                    <div class="form-group">
+                        <label class="control-label"for="nameInput">
+                            Your name
+                        </label>
+                        <input class="form-control" type="text" id="nameInput"
+                                placeholder="Name">
+                        </input>
+                    </div>
+                    <input class="btn btn-primary btn-block" 
+                           type="submit" id="joinGame"value="Join"></input>
+                </form>
+                </div>
+
+            </div>
+            </div>
+
+            <div class="view" id="waitView" hidden>
+            <div class="panel panel-primary panel-center">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        Players:
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-group" id="playerList">
+                    </ul>
+                    <button class="btn btn-default" id="startGame">Start</button>
+                </div>
+
+            </div>
+            </div>
+
+            <div class="view" id="playView" hidden>
+                This should be the game
+            </div>
         </div>
     </body>
       
     <script src="https://code.jquery.com/jquery-2.2.3.min.js"
             integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo="
             crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
     <script src="/client.js"></script>
 </html>
