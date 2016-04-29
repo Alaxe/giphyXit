@@ -28,10 +28,10 @@ app.get('/p/:room', function(req, res) {
     }
 
     room = rooms[roomId];
-    if (room.playing) {
-        res.redirect('/p');
-    } else {
+    if (room.canJoin()) {
         res.render('play', room);
+    } else {
+        res.redirect('/p');
     }
 });
 

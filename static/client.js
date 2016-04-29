@@ -1,8 +1,14 @@
 //ws stands for WebSocket
 var curView = null,
     gameId = '',
-    playerList = [];
-    ws = null;
+    ws = null,
+
+    userName = '',
+    storyTeller = false,
+
+    playerList = [],
+    hand = [],
+    voteList = [];
 
 function setView(view) {
     $('.view').hide();
@@ -21,46 +27,76 @@ function updatePlayers(newList) {
     });
 }
 
+function beginRound() {
+    setView('playView');
+}
+
 function handleMessage(msgStr) {
     console.log(msgStr);
     var msg = JSON.parse(msgStr.data);
 
-    if (msg.type == 'updatePlayers') {
-        updatePlayers(msg.players);
+    switch (msg.type) {
+        case 'error':
+            $('#error').text(msg.text);
+            break;
+        case 'updatePlayers':
+            updatePlayers(msg.players);
+            break;
+        case 'gameStart':
+            hand = msg.hand;
+            storyTeller = msg.storyTeller;
+            beginRound();
+            break;
+
     }
 }
+
+
+function connectWS() {
+    ws = new WebSocket('ws://192.168.0.201:8080');
+    ws.onopen = function() {
+        var msg = {
+            type: 'connect',
+            name: userName,
+            gameId: gameId
+        };
+        ws.send(JSON.stringify(msg));
+
+        setView('waitView');
+    };
+    ws.onmessage = handleMessage;
+    ws.onerror = ws.onclose = function() {
+        window.location = '/';
+    };
+}
+
 
 function getGameId() {
     var url = document.URL;
     return url.substr(url.lastIndexOf('/') + 1);
 }
 
+function startGame() {
+    console.log('hi');
+    var msg = JSON.stringify({type: 'startGame'});
+    ws.send(msg);
+}
+
 $(function() {
     setView('joinView');
     gameId = getGameId();
 
-    $('#joinGame').click(function() {
+    $('button').click(function() {
         $('#error').text('');
-        var userName = $('#nameInput').val();
+    });
+
+    $('#joinGame').click(function() {
+        userName = $('#nameInput').val();
         if (userName == '') {
             $('#error').text('One needs an username');
-            return;
-        } 
-
-        ws = new WebSocket('ws://localhost:8080');
-        ws.onopen = function() {
-            var msg = {
-                type: 'connect',
-                name: userName,
-                gameId: gameId
-            };
-            ws.send(JSON.stringify(msg));
-
-            setView('waitView');
-        };
-        ws.onmessage = handleMessage;
-        ws.onerror = ws.onclose = function() {
-            setView('joinView');
-        };
+        } else {
+            connectWS();
+        }
     });
+    $('#startGame').click(startGame);
 });
