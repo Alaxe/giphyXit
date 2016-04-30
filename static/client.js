@@ -18,22 +18,45 @@ function setView(view) {
     curView = view;
 }
 
-function updatePlayers(newList) {
-    playerList = newList;
+function updatePlayerList() {
+    var waitTable = $('#playerList > tbody'),
+        row = null,
+        cell = null;
 
-    var waitList = $('#playerList');
-    waitList.empty();
-    playerList.forEach(function(player) {
-        $('<li></li>')
-        .text(player.name)
-        .addClass('list-group-item')
-        .addClass((player.name === userName) ? 'active' : '')
-        .appendTo(waitList);
+    waitTable.empty();
+    playerList.forEach(function (player) {
+        row = $('<tr></tr>')
+            .addClass((player.name === userName) ? 'active' : '')
+            .appendTo(waitTable);
+        cell = $('<td></td>')
+            .text(player.name)
+            .appendTo(row);
+    });
+}
+
+function updateScoreboard() {
+    var scoreboard = $('#scoreboard > tbody'),
+        row = null,
+        nameCell = null,
+        scoreCell = null,
+        storyTellerBadge = null;
+
+    scoreboard.empty();
+    playerList.forEach(function (player) {
+        row = $('<tr></tr>')
+            .addClass((player.name === userName) ? 'active' : '')
+            .appendTo(scoreboard);
+        nameCell = $('<td></td>')
+            .text(player.name)
+            .appendTo(row);
+        scoreCell = $('<td></td>')
+            .text(player.score)
+            .appendTo(row);
     });
 }
 
 function beginRound() {
-    setView('playView');
+    updateScoreboard();
 }
 
 function handleMessage(msgStr) {
@@ -45,12 +68,15 @@ function handleMessage(msgStr) {
             $('#error').text(msg.text);
             break;
         case 'updatePlayers':
-            updatePlayers(msg.players);
+            playerList = msg.players;
+            updatePlayerList();
             break;
-        case 'gameStart':
+        case 'startGame':
             hand = msg.hand;
             storyTeller = msg.storyTeller;
             beginRound();
+
+            setView('playView');
             break;
 
     }
@@ -82,7 +108,6 @@ function getGameId() {
 }
 
 function startGame() {
-    console.log('hi');
     var msg = JSON.stringify({type: 'startGame'});
     ws.send(msg);
 }

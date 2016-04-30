@@ -1,7 +1,7 @@
 <html>
     <head>
         <title>Playing giphyXit</title>
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.6/paper/bootstrap.min.css" crossorigin="anonymous">
         <style>
         .panel-center {
             max-width: 400px;
@@ -50,16 +50,37 @@
                     </h3>
                 </div>
                 <div class="panel-body">
-                    <ul class="list-group" id="playerList">
-                    </ul>
+                    <table class="table" id="playerList">
+                        <tbody>
+                        </tbody>
+                    </table>
                     <button class="btn btn-default" id="startGame">Start</button>
                 </div>
 
             </div>
             </div>
 
-            <div class="view" id="playView" hidden>
-                This should be the game
+            <div class="view row" id="playView" hidden>
+
+                <div class="col-sm-4">
+                    <div class="panel panel-info">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">
+                                Scoreboard
+                            </h3>
+                        </div>
+                        <div class="panel-body">
+                            <table class="table" id="scoreBoard">
+                                <thead>
+                                    <th>Name</th>
+                                    <th>Score</th>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </body>
