@@ -9,6 +9,22 @@
             margin-left: auto;
             margin-right: auto;
         }
+        textarea {
+            width: 100%;
+            resize: none;
+        }
+        .card {
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            margin: 5px;
+            border-radius: 10px;
+            width: 200px;
+            box-sizing: border-box;
+        }
+        .card.active {
+            border-style: solid;
+            border-width: 2px;
+            border-color: #2196f3;
+        }
         </style>
 
     </head>
@@ -54,15 +70,16 @@
                         <tbody>
                         </tbody>
                     </table>
-                    <button class="btn btn-default" id="startGame">Start</button>
+                    <button class="btn btn-default" id="startGame">
+                        Start
+                    </button>
                 </div>
 
             </div>
             </div>
 
             <div class="view row" id="playView" hidden>
-
-                <div class="col-sm-4">
+                <div class="col-md-3">
                     <div class="panel panel-info">
                         <div class="panel-heading">
                             <h3 class="panel-title">
@@ -78,6 +95,88 @@
                                 <tbody>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-9">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="panel panel-primary panel-top">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">
+                                        Game info
+                                    </h3>
+                                </div>
+                                <div class="panel-body">
+                                    <p id="gameInfo">
+                                        You're currently doing a thing
+                                        just wait for a bit
+                                        ok ?
+                                        it's kind a dull, I know,
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="panel panel-primary panel-top">
+                                <div class="panel-heading">
+                                    <h3 class="panel-title">
+                                        Current description
+                                    </h3>
+                                </div>
+                                <div class="panel-body">
+                                    <p id="cardDescritpion" hidden>
+                                        Here we describe a card
+                                    </p>
+                                    <form id="descritpionForm">
+                                        <div class="form-group">
+                                            <label for="descriptionInput">
+                                                Enter description
+                                            </label>
+                                            <textarea class="form-control" 
+                                                      rows="2" id="descriptionInput"
+                                            ></textarea>
+                                        </div>
+                                        <input type="submit" value="Desrcibe" 
+                                             class="btn btn-primary btn-block">
+                                        </input>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">
+                                Card voting
+                            </h3>
+                        </div>
+                        <div class="panel-body">
+                            here should go gifs
+                        </div>
+                    </div>
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">
+                                Your cards
+                            </h3>
+                        </div>
+                        <div class="panel-body">
+                            <div id="hand">
+                                <img class="card" 
+                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
+                                <img class="card" 
+                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
+                                <img class="card" 
+                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
+                                <img class="card active" 
+                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
+                                <img class="card" 
+                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
+                                <img class="card" 
+                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
+                            </div>
                         </div>
                     </div>
                 </div>

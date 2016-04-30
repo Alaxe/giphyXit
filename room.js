@@ -34,7 +34,8 @@ class Room extends EventEmitter {
         this.sendPlayers();
     }
     removePlayer(player) {
-        var index = this.players.indexOf(player);
+        //TO-DO handle disconnect while playing - story teller is important
+        let index = this.players.indexOf(player);
         if (index >= 0) {
             this.players.splice(index, 1);
             this.sendPlayers();
@@ -45,7 +46,7 @@ class Room extends EventEmitter {
         tags = tags || '';
         rating = rating || 'g';
 
-        var self = this,
+        let self = this,
             idSet = new Set(),
             reqUrl = `http://api.giphy.com/v1/gifs/random?api_key` + 
                     `=dc6zaTOxFJmzC&tag=${tags}&rating=${rating}`;
@@ -95,40 +96,48 @@ class Room extends EventEmitter {
         });
     }
 
-    startGame() {
-        let self = this;
+    startRound() {
+        this.players[this.storyTellerInd].storyTeller = true;
 
-        if (self.playing) {
-            return;
-        }
-        self.playing = true;
+        let playerList = this.getPlayerList();
 
-        console.log('startGame');
-
-        this.genDeck((err) => {
-            self.dealCards();
-            console.log('cards dealt');
-            self.players[self.storyTellerInd].storyTeller = true;
-            self.players.forEach(p => {
-                p.sendStart();   
-            });
+        this.players.forEach(p => {
+            p.sendStartRound(playerList);
         });
     }
 
-    sendPlayers() {
-        var playerList = [],
-            msgStr;
+    startGame() {
+        let self = this;
+
+        if (this.playing) {
+            return;
+        }
+        this.playing = true;
+
+        this.genDeck((err) => {
+            self.dealCards();
+            self.startRound();
+        });
+    }
+
+    getPlayerList() {
+        let playerList = [];
 
         this.players.forEach(p => {
             playerList.push({
                 name: p.name,
-                score: p.score
+                score: p.score,
+                storyTeller: p.storyTeller
             });
         });
 
-        msgStr = JSON.stringify({
+        return playerList;
+    }
+
+    sendPlayers() {
+        let msgStr = JSON.stringify({
             type: 'updatePlayers',
-            players: playerList
+            players: this.getPlayerList()
         });
 
         this.players.forEach(p => {

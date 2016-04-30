@@ -25,10 +25,11 @@ class Player extends EventEmitter {
         this.ws.send(msgText);
     }
 
-    sendStart() {
+    sendStartRound(playerList) {
         let msg = {
-            type: 'startGame',
+            type: 'startRound',
             hand: this.hand,
+            players: playerList,
             storyTeller: this.storyTeller
         };
         this.ws.send(JSON.stringify(msg));

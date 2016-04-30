@@ -6,7 +6,7 @@ var curView = null,
     userName = '',
     storyTeller = false,
 
-    playerList = [],
+    players = [],
     hand = [],
     voteList = [];
 
@@ -24,7 +24,7 @@ function updatePlayerList() {
         cell = null;
 
     waitTable.empty();
-    playerList.forEach(function (player) {
+    players.forEach(function (player) {
         row = $('<tr></tr>')
             .addClass((player.name === userName) ? 'active' : '')
             .appendTo(waitTable);
@@ -42,7 +42,7 @@ function updateScoreboard() {
         storyTellerBadge = null;
 
     scoreboard.empty();
-    playerList.forEach(function (player) {
+    players.forEach(function (player) {
         row = $('<tr></tr>')
             .addClass((player.name === userName) ? 'active' : '')
             .appendTo(scoreboard);
@@ -52,11 +52,26 @@ function updateScoreboard() {
         scoreCell = $('<td></td>')
             .text(player.score)
             .appendTo(row);
+
+        if (player.storyTeller) {
+            storyTellerBadge = $('<span></span>')
+                .text('ST')
+                .addClass('badge')
+                .appendTo(nameCell);
+        }
     });
 }
 
-function beginRound() {
-    updateScoreboard();
+function updateHand() {
+    var handDiv = $('#hand');
+    
+    handDiv.empty();
+    hand.forEach(function (card) {
+        $('<img/>')
+            .addClass('card')
+            .attr('src', card.fixed_width_downsampled_url)
+            .appendTo(handDiv);
+    });
 }
 
 function handleMessage(msgStr) {
@@ -68,13 +83,20 @@ function handleMessage(msgStr) {
             $('#error').text(msg.text);
             break;
         case 'updatePlayers':
-            playerList = msg.players;
-            updatePlayerList();
+            players = msg.players;
+            if (curView == 'playView') {
+                updateScoreboard();
+            } else {
+                updatePlayerList();
+            }
             break;
-        case 'startGame':
+        case 'startRound':
             hand = msg.hand;
             storyTeller = msg.storyTeller;
-            beginRound();
+            players = msg.players;
+
+            updateScoreboard();
+            updateHand();
 
             setView('playView');
             break;
