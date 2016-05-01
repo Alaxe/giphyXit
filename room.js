@@ -2,7 +2,8 @@
 var EventEmitter = require('events'),
     Player = require('./player.js'),
     http = require('http'),
-    decoder = new require('string_decoder').StringDecoder('utf8');
+    shuffle = require('knuth-shuffle').knuthShuffle;
+
 
 const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 6;
@@ -16,6 +17,14 @@ class Room extends EventEmitter {
         this.playing = false;
         this.deck = [];
         this.storyTellerInd = 0;
+
+        this.describeId = '';
+        this.describeText = '';
+        this.chooseCards = [];
+    }
+
+    static get HAND_SIZE() {
+        return HAND_SIZE;
     }
 
     canJoin() {
@@ -26,6 +35,7 @@ class Room extends EventEmitter {
         }
     }
     canStart() {
+        return true;
         return ((this.players.length >= MIN_PLAYERS) && (!this.playing));
     }
 
@@ -97,12 +107,20 @@ class Room extends EventEmitter {
     }
 
     startRound() {
-        this.players[this.storyTellerInd].storyTeller = true;
+        this.dealCards();
+        this.chooseCards = [];
 
+        this.players[this.storyTellerInd].storyTeller = true;
         let playerList = this.getPlayerList();
 
         this.players.forEach(p => {
-            p.sendStartRound(playerList);
+            let msg = {
+                type: 'startRound',
+                hand: p.hand,
+                players: playerList,
+                storyTeller: p.storyTeller
+            };
+            p.ws.send(JSON.stringify(msg));
         });
     }
 
@@ -114,10 +132,59 @@ class Room extends EventEmitter {
         }
         this.playing = true;
 
-        this.genDeck((err) => {
-            self.dealCards();
+        this.genDeck(() => {
             self.startRound();
         });
+    }
+
+    setCardDescription(card, description) {
+        this.describeId = card.id;
+        this.describeText = description;
+
+        this.chooseCards.push({
+            player: this.players[this.storyTellerInd],
+            card: card
+        });
+
+        let msgStr = JSON.stringify({
+            type: 'describeCard',
+            text: this.describeText
+        });
+
+        this.players.forEach(p => {
+            if (!p.storyTeller) {
+                p.ws.send(msgStr);
+            }
+        });
+    }
+
+    playCard(player, card) { 
+        this.chooseCards.push({
+            player: player,
+            card: card
+        });
+
+
+        console.log(this.chooseCards.length);
+        if (this.chooseCards.length == this.players.length) {
+            shuffle(this.chooseCards);
+            console.log('I\'ve done it mum');
+            
+            //Don't send the clients info about who played the cards
+            let cleanCards = [];
+            this.chooseCards.forEach(c => {
+                cleanCards.push(c.card);
+            });
+
+            let msg = JSON.stringify({
+                type: 'chooseCard',
+                cards: cleanCards
+            });
+
+            this.players.forEach(p => {
+                p.ws.send(msg);
+            });
+        }
     }
 
     getPlayerList() {

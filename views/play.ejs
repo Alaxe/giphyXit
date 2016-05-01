@@ -126,22 +126,9 @@
                                     </h3>
                                 </div>
                                 <div class="panel-body">
-                                    <p id="cardDescritpion" hidden>
+                                    <p id="cardDescritpion">
                                         Here we describe a card
                                     </p>
-                                    <form id="descritpionForm">
-                                        <div class="form-group">
-                                            <label for="descriptionInput">
-                                                Enter description
-                                            </label>
-                                            <textarea class="form-control" 
-                                                      rows="2" id="descriptionInput"
-                                            ></textarea>
-                                        </div>
-                                        <input type="submit" value="Desrcibe" 
-                                             class="btn btn-primary btn-block">
-                                        </input>
-                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -153,7 +140,9 @@
                             </h3>
                         </div>
                         <div class="panel-body">
-                            here should go gifs
+                            <div id="voteCards">
+                                
+                            </div>
                         </div>
                     </div>
                     <div class="panel panel-primary">
@@ -164,18 +153,25 @@
                         </div>
                         <div class="panel-body">
                             <div id="hand">
-                                <img class="card" 
-                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
-                                <img class="card" 
-                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
-                                <img class="card" 
-                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
-                                <img class="card active" 
-                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
-                                <img class="card" 
-                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
-                                <img class="card" 
-                                     src="http://s3.amazonaws.com/giphygifs/media/Ggjwvmqktuvf2/200w.gif">
+                            </div>
+                            <form id="descriptionForm" hidden>
+                                <div class="form-group">
+                                    <label for="descriptionInput">
+                                        Enter description
+                                    </label>
+                                    <textarea class="form-control" 
+                                              rows="2" id="descriptionInput"
+                                    ></textarea>
+                                </div>
+                                <input type="submit" value="Desrcibe" 
+                                     class="btn btn-primary btn-block">
+                                </input>
+                            </form>
+                            <div id="playCardDiv" hidden>
+                                <button id="playCard" 
+                                        class="btn btn-primary btn-block">
+                                    Choose card 
+                                </button>
                             </div>
                         </div>
                     </div>
