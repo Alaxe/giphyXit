@@ -14,16 +14,41 @@
             resize: none;
         }
         .card {
-            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
             margin: 5px;
-            border-radius: 10px;
-            width: 200px;
+            width: 210px;
             box-sizing: border-box;
-        }
-        .card.active {
+            display: inline-block;
+
+            border-color: rgba(0, 0, 0, 0);
             border-style: solid;
             border-width: 2px;
+            vertical-align: top;
+        }
+        .card > .panel-body {
+            padding: 3px;
+        }
+        .card > .panel-body > img {
+            display: block;
+            width: 200px;
+        }
+
+
+        .card.active {
             border-color: #2196f3;
+        }
+        .card.correct {
+            border-color: #4caf50;
+        }
+        .card.yours {
+            border-color: #9c27b0;
+        }
+        .card.wrong {
+            border-color: #e51c23;
+        }
+
+        .author-info {
+            font-size: medium;
+            margin-left: 5px;
         }
         </style>
 
@@ -110,10 +135,6 @@
                                 </div>
                                 <div class="panel-body">
                                     <p id="gameInfo">
-                                        You're currently doing a thing
-                                        just wait for a bit
-                                        ok ?
-                                        it's kind a dull, I know,
                                     </p>
                                 </div>
                             </div>
@@ -127,21 +148,26 @@
                                 </div>
                                 <div class="panel-body">
                                     <p id="cardDescritpion">
-                                        Here we describe a card
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="panel panel-primary">
+                    <div class="panel panel-primary" id="chooseCardPanel" hidden>
                         <div class="panel-heading">
                             <h3 class="panel-title">
                                 Card voting
                             </h3>
                         </div>
                         <div class="panel-body">
-                            <div id="voteCards">
+                            <div id="voteList">
                                 
+                            </div>
+                            <div id="chooseCardDiv" hidden>
+                                <button id="chooseCard" 
+                                        class="btn btn-primary btn-block">
+                                    Choose
+                                </button>
                             </div>
                         </div>
                     </div>

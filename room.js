@@ -16,11 +16,12 @@ class Room extends EventEmitter {
         this.players = [];
         this.playing = false;
         this.deck = [];
-        this.storyTellerInd = 0;
+        this.storyTellerInd = -1;
 
         this.describeId = '';
         this.describeText = '';
         this.chooseCards = [];
+        this.votesLeft = 0;
     }
 
     static get HAND_SIZE() {
@@ -110,17 +111,27 @@ class Room extends EventEmitter {
         this.dealCards();
         this.chooseCards = [];
 
+        if (this.storyTellerInd >= 0) {
+            this.players[this.storyTellerInd].storyTeller = false;
+        }
+        this.storyTellerInd++;
+        if (this.storyTellerInd >= this.players.length) {
+            this.storyTellerInd = 0;
+        }
+        this.players.forEach(p => {
+            p.voteId = '';
+        });
         this.players[this.storyTellerInd].storyTeller = true;
+
         let playerList = this.getPlayerList();
 
         this.players.forEach(p => {
-            let msg = {
+            p.ws.send(JSON.stringify({
                 type: 'startRound',
                 hand: p.hand,
                 players: playerList,
                 storyTeller: p.storyTeller
-            };
-            p.ws.send(JSON.stringify(msg));
+            }));
         });
     }
 
@@ -165,10 +176,9 @@ class Room extends EventEmitter {
         });
 
 
-        console.log(this.chooseCards.length);
         if (this.chooseCards.length == this.players.length) {
             shuffle(this.chooseCards);
-            console.log('I\'ve done it mum');
+            this.votesLeft = this.players.length - 1;
             
             //Don't send the clients info about who played the cards
             let cleanCards = [];
@@ -210,6 +220,86 @@ class Room extends EventEmitter {
         this.players.forEach(p => {
             p.ws.send(msgStr);  
         });
+    }
+
+    gameEnded() {
+        let answ = false;
+
+        if (this.deck.length < this.players.length) {
+            answ = true;
+        } else {
+            this.players.forEach(p => {
+                if (p.score >= 30) {
+                    answ = true;
+                }
+            });
+        }
+
+        return answ;
+    } 
+
+    sendResults() {
+        console.log('Should send results to clients');
+    }
+
+    sendVoteResults() {
+        let votesById = {};
+        this.chooseCards.forEach(c => {
+            votesById[c.card.id] = {
+                player: c.player.name,
+                votes: []
+            };
+        })
+
+        let guessedCnt = 0;
+        this.players.forEach(p => {
+            if (p.voteId in votesById) {
+                if (p.voteId == this.describeId) {
+                    guessedCnt++;
+                }
+                votesById[p.voteId].votes.push(p.name);
+            }
+        });
+
+        let msg = JSON.stringify({
+            type: 'voteResults',
+            votesById: votesById,
+            correctId: this.describeId
+        });
+        this.players.forEach(p => {
+            p.ws.send(msg);
+        });
+        
+        console.log(guessedCnt);
+        if ((guessedCnt == 0) || (guessedCnt == this.players.length - 1)) {
+            this.players.forEach(p => {
+                if (!p.storyTeller) {
+                    p.score += 2;
+                }
+            });
+        } else {
+            this.players.forEach(p => {
+                if (p.storyTeller) {
+                    p.score += 3;
+                } else if (p.voteId == this.describeId) {
+                    p.score += 3;
+                }
+            });
+            this.chooseCards.forEach(c => {
+                if (!c.player.storyTeller) {
+                    c.player.score += votesById[c.card.id].votes.length;
+                }
+            });
+        }
+
+        let self = this;
+        setTimeout(() => {
+            if (self.gameEnded()) {
+                self.sendResults();
+            } else {
+                self.startRound();
+            }
+        }, 3000);
     }
 };
 

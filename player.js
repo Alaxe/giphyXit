@@ -12,6 +12,7 @@ class Player extends EventEmitter {
         this.name = name;
         this.score = 0;
         this.storyTeller = false;
+        this.voteId = '';
         this.hand = [];
 
 
@@ -85,6 +86,18 @@ class Player extends EventEmitter {
         this.room.playCard(this, card);
         this.removeCard(msg.id);
     }
+    vote(msg) {
+        if (this.voteId != '') {
+            return;
+        }
+        this.voteId = msg.id;
+        this.room.votesLeft--;
+        console.log('Votes left', this.name, this.room.votesLeft);
+
+        if (this.room.votesLeft == 0) {
+            this.room.sendVoteResults();
+        }
+    }
 
     handleMessage(msgStr) {
         let msg = JSON.parse(msgStr);
@@ -98,6 +111,8 @@ class Player extends EventEmitter {
             case 'playCard':
                 this.playCard(msg);
                 break;
+            case 'vote':
+                this.vote(msg);
        }
     }
 }
