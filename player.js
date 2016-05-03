@@ -46,10 +46,11 @@ class Player extends EventEmitter {
     }
 
     startGame(msg) {
-        if (this.room.canStart()) {
+        let error = this.room.canStart();
+        if (!error) {
             this.room.startGame();
         } else {
-            this.sendError('Can\'t start game');
+            this.sendError(error);
         }
     }
     describeCard(msg) {
@@ -92,7 +93,6 @@ class Player extends EventEmitter {
         }
         this.voteId = msg.id;
         this.room.votesLeft--;
-        console.log('Votes left', this.name, this.room.votesLeft);
 
         if (this.room.votesLeft == 0) {
             this.room.sendVoteResults();

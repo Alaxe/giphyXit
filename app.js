@@ -48,5 +48,5 @@ wss.on('connection', function(ws) {
 
 server.on('request', app);
 app.listen(port, function() {
-    console.log('listening on some port');
+    console.log('listening on port ', port);
 });

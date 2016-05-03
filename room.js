@@ -1,5 +1,6 @@
 "use strict";
 var EventEmitter = require('events'),
+    WebSocket = require('ws'),
     Player = require('./player.js'),
     http = require('http'),
     shuffle = require('knuth-shuffle').knuthShuffle;
@@ -36,13 +37,29 @@ class Room extends EventEmitter {
         }
     }
     canStart() {
-        return true;
-        return ((this.players.length >= MIN_PLAYERS) && (!this.playing));
+        if (this.playing) {
+            return 'Already playing';
+        } else if (this.players.length < MIN_PLAYERS) {
+            return 'Not enough players';
+        } else {
+            return null;
+        }
     }
 
     addPlayer(ws, userName) {
-        this.players.push(new Player(this, ws, userName));
-        this.sendPlayers();
+        let taken = false;
+        for(let i = 0;i < this.players.length;i++) {
+            if (this.players[i].name === userName) {
+                taken = true;
+                break;
+            }
+        }
+        if (taken) {
+            ws.send(JSON.stringify({type: 'nameTaken'}));
+        } else {
+            this.players.push(new Player(this, ws, userName));
+            this.sendPlayers();
+        }
     }
     removePlayer(player) {
         //TO-DO handle disconnect while playing - story teller is important
@@ -218,11 +235,14 @@ class Room extends EventEmitter {
         });
 
         this.players.forEach(p => {
-            p.ws.send(msgStr);  
+            if (p.ws.readyState == WebSocket.OPEN) {
+                p.ws.send(msgStr);  
+            }
         });
     }
 
     gameEnded() {
+        return true;
         let answ = false;
 
         if (this.deck.length < this.players.length) {
@@ -239,7 +259,20 @@ class Room extends EventEmitter {
     } 
 
     sendResults() {
-        console.log('Should send results to clients');
+        this.players[this.storyTellerInd].storyTeller = false;
+        this.players.sort((a, b) => {
+            return a.score < b.score;
+        });
+
+        let msg = JSON.stringify({
+            type: 'gameEnded',
+            players: this.getPlayerList()
+        });
+        this.playing = false;
+        this.players.forEach(p => {
+            p.ws.send(msg);
+            p.ws.close();
+        });
     }
 
     sendVoteResults() {
@@ -270,7 +303,6 @@ class Room extends EventEmitter {
             p.ws.send(msg);
         });
         
-        console.log(guessedCnt);
         if ((guessedCnt == 0) || (guessedCnt == this.players.length - 1)) {
             this.players.forEach(p => {
                 if (!p.storyTeller) {

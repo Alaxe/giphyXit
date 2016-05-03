@@ -5,7 +5,6 @@
         <style>
         .panel-center {
             max-width: 400px;
-            margin-top: 16px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -50,62 +49,88 @@
             font-size: medium;
             margin-left: 5px;
         }
+        .container-fluid {
+            padding-top: 10px;
+        }
         </style>
 
     </head>
     <body>
-        <div class="container">
-            <div id="error"></div>
+        <div class="container-fluid">
+            <div class="alert alert-danger" id="error" hidden></div>
 
             <div class="view" id="joinView" hidden>
-            <div class="panel panel-primary panel-center">
+                <div class="panel panel-primary panel-center">
 
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        Enter a name
-                    </h3>
-                </div>
-                <div class="panel-body">
-                <form id="joinForm">
-                    <div class="form-group">
-                        <label class="control-label"for="nameInput">
-                            Your name
-                        </label>
-                        <input class="form-control" type="text" id="nameInput"
-                                placeholder="Name">
-                        </input>
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            Enter a name
+                        </h3>
                     </div>
-                    <input class="btn btn-primary btn-block" 
-                           type="submit" id="joinGame"value="Join"></input>
-                </form>
-                </div>
+                    <div class="panel-body">
+                    <form id="joinForm">
+                        <div class="form-group">
+                            <label class="control-label"for="nameInput">
+                                Your name
+                            </label>
+                            <input class="form-control" 
+                                   type="text" 
+                                    id="nameInput"
+                                    placeholder="Name">
+                            </input>
+                        </div>
+                        <input class="btn btn-primary btn-block" 
+                               type="submit" 
+                               id="joinGame"
+                               value="Join">
+                        </input>
+                    </form>
+                    </div>
 
-            </div>
+                </div>
             </div>
 
             <div class="view" id="waitView" hidden>
-            <div class="panel panel-primary panel-center">
-                <div class="panel-heading">
-                    <h3 class="panel-title">
-                        Players:
-                    </h3>
-                </div>
-                <div class="panel-body">
-                    <table class="table" id="playerList">
-                        <tbody>
-                        </tbody>
-                    </table>
-                    <button class="btn btn-default" id="startGame">
-                        Start
-                    </button>
-                </div>
+                <div class="panel panel-primary panel-center">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            Players
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table" id="playerList">
+                            <tbody>
+                            </tbody>
+                        </table>
+                        <button class="btn btn-default" id="startGame">
+                            Start
+                        </button>
+                    </div>
 
+                </div>
             </div>
+            <div class="view" id="resultsView" hidden>
+                <div class="panel panel-primary panel-center">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            Results
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table" id="results">
+                            <thead>
+                                <th>Name</th>
+                                <th>Score</th>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-
             <div class="view row" id="playView" hidden>
                 <div class="col-md-3">
-                    <div class="panel panel-info">
+                    <div class="panel panel-primary">
                         <div class="panel-heading">
                             <h3 class="panel-title">
                                 Scoreboard

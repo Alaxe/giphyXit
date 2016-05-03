@@ -14,7 +14,6 @@ var curView = null,
     voteList = [];
 
 function setView(view) {
-    console.log('setting view %s', view);
     $('.view').hide();
     $('#' + view).show();
 
@@ -35,8 +34,9 @@ function updatePlayerList() {
             .appendTo(row);
     });
 }
-function updateScoreboard() {
-    var scoreboard = $('#scoreboard > tbody'),
+function updateScoreboard(container) {
+    container = container || '#scoreboard';
+    var scoreboard = $(container + ' > tbody'),
         row = null,
         nameCell = null,
         scoreCell = null,
@@ -89,11 +89,11 @@ function setGameInfo(info) {
     $('#gameInfo').text(info);
 }
 function clearErrors() {
-    $('#error').text('');
+    $('#error').slideUp();
 }
 function error(errMsg) {
     $('#error').text(errMsg);
-    console.log('[Error]: ', errMsg);
+    $('#error').slideDown();
 }
 function removeCard(id) {
     var i;
@@ -119,6 +119,41 @@ function getSelectedId(listId) {
     }
 }
 
+function onJoinFormSubmit() {
+    userName = $('#nameInput').val();
+    if (userName == '') {
+        error('One needs an username');
+        return false;
+    } else {
+        clearErrors();
+    }
+
+    ws = new WebSocket('ws://' + document.location.hostname + ':8080');
+    ws.onopen = function() {
+        ws.send(JSON.stringify({
+            type: 'connect',
+            name: userName,
+            gameId: gameId
+        }));
+
+        setView('waitView');
+    };
+    ws.onmessage = handleMessage;
+
+    ws.onerror = function() {
+        window.location = '/';
+    };
+    
+    //makes sure the form isn't actually submited
+    return false;
+}
+function onNameTaken() {
+    error('Name is already taken');
+    ws.close();
+
+    $('#nameInput').val('');
+    setView('joinView');
+}
 function onDescriptionFormSubmit() {
     var curCardId = getSelectedId('#hand'),
         description = $('#descriptionInput').val(),
@@ -187,7 +222,7 @@ function onUpdatePlayers(msg) {
     players = msg.players;
     if (curView == 'playView') {
         updateScoreboard();
-    } else {
+    } else if (curView == 'waitView') {
         updatePlayerList();
     }
 }
@@ -320,40 +355,20 @@ function onVoteResults(msg) {
     setGameInfo('Look at who voted how and wait for the start of the next round');
 
 }
-function onJoinFormSubmit() {
-    userName = $('#nameInput').val();
-    if (userName == '') {
-        error('One needs an username');
-        return;
-    } else {
-        clearErrors();
-    }
-
-    ws = new WebSocket('ws://192.168.0.201:8080');
-    ws.onopen = function() {
-        ws.send(JSON.stringify({
-            type: 'connect',
-            name: userName,
-            gameId: gameId
-        }));
-
-        setView('waitView');
-    };
-    ws.onmessage = handleMessage;
-
-    ws.onerror = ws.onclose = function() {
-        window.location = '/';
-    };
-    
-    //makes sure the form isn't actually submited
-    return false;
+function onGameEnded(msg) {
+    players = msg.players;
+    updateScoreboard('#results');
+    setView('resultsView');
+    //ws.close();
 }
 
 function handleMessage(msgStr) {
-    console.log(msgStr);
     var msg = JSON.parse(msgStr.data);
 
     switch (msg.type) {
+        case 'nameTaken':
+            onNameTaken(msg);
+            break;
         case 'error':
             error(msg.text);
             break;
@@ -371,6 +386,9 @@ function handleMessage(msgStr) {
             break;
         case 'voteResults':
             onVoteResults(msg);
+            break;
+        case 'gameEnded':
+            onGameEnded(msg);
             break;
     }
 }
