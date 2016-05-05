@@ -7,17 +7,25 @@ var EventEmitter = require('events'),
 
 
 const MIN_PLAYERS = 3;
-const MAX_PLAYERS = 6;
+const MAX_PLAYERS = 3;
 const DECK_SIZE = 84;
 const HAND_SIZE = 6;
+const ROUND_TIMEOUT = 10;
+
+const RoomState = {
+    LOBBY: 0,
+    PLAYING: 1,
+    FINISHED: 2
+};
 
 class Room extends EventEmitter {
     constructor() {
         super();
+
         this.players = [];
-        this.playing = false;
         this.deck = [];
         this.storyTellerInd = -1;
+        this.state = RoomState.LOBBY;
 
         this.describeId = '';
         this.describeText = '';
@@ -30,14 +38,18 @@ class Room extends EventEmitter {
     }
 
     canJoin() {
-        if ((this.playing) || (this.players.length >= MAX_PLAYERS)) {
+        console.log('canJoin', this.state);
+        if (this.state !== RoomState.LOBBY) {
+            return false;
+        } else if (this.players.length >= MAX_PLAYERS) {
             return false;
         } else {
+            console.log('true');
             return true;
         }
     }
     canStart() {
-        if (this.playing) {
+        if (this.state !== RoomState.LOBBY) {
             return 'Already playing';
         } else if (this.players.length < MIN_PLAYERS) {
             return 'Not enough players';
@@ -62,11 +74,14 @@ class Room extends EventEmitter {
         }
     }
     removePlayer(player) {
-        //TO-DO handle disconnect while playing - story teller is important
         let index = this.players.indexOf(player);
         if (index >= 0) {
             this.players.splice(index, 1);
             this.sendPlayers();
+        }
+        if (this.players.length == 0) {
+            this.state = RoomState.FINISHED;
+
         }
     }
 
@@ -154,11 +169,7 @@ class Room extends EventEmitter {
 
     startGame() {
         let self = this;
-
-        if (this.playing) {
-            return;
-        }
-        this.playing = true;
+        this.state = RoomState.PLAYING;
 
         this.genDeck(() => {
             self.startRound();
@@ -242,7 +253,6 @@ class Room extends EventEmitter {
     }
 
     gameEnded() {
-        return true;
         let answ = false;
 
         if (this.deck.length < this.players.length) {
@@ -258,7 +268,7 @@ class Room extends EventEmitter {
         return answ;
     } 
 
-    sendResults() {
+    endGame() {
         this.players[this.storyTellerInd].storyTeller = false;
         this.players.sort((a, b) => {
             return a.score < b.score;
@@ -273,6 +283,9 @@ class Room extends EventEmitter {
             p.ws.send(msg);
             p.ws.close();
         });
+
+        this.state = RoomState.FINISHED;
+        this.emit('gameEnd', this.gameId);
     }
 
     sendVoteResults() {
@@ -327,11 +340,11 @@ class Room extends EventEmitter {
         let self = this;
         setTimeout(() => {
             if (self.gameEnded()) {
-                self.sendResults();
+                self.endGame();
             } else {
                 self.startRound();
             }
-        }, 3000);
+        }, ROUND_TIMEOUT * 1000);
     }
 };
 

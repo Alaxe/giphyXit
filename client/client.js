@@ -3,6 +3,7 @@
 var curView = null,
     gameId = '',
     ws = null,
+    gameEnded = false,
 
     userName = '',
     storyTeller = false,
@@ -140,8 +141,9 @@ function onJoinFormSubmit() {
     };
     ws.onmessage = handleMessage;
 
-    ws.onerror = function() {
-        window.location = '/';
+    ws.onerror = ws.onclose = function() {
+        window.location.pathname = '/p';
+        console.log('hi');
     };
     
     //makes sure the form isn't actually submited
@@ -210,6 +212,7 @@ function onStartRound(msg) {
         setDescription('Don\'t look at me, that\'s your job');
 
         $('#descriptionForm').show();
+        $('#descriptionInput').val('');
     } else {
         setGameInfo('Wait for the story teller to describe a card');
         setDescription('Don\'t know, read the story teller\'s mind');
@@ -359,11 +362,12 @@ function onGameEnded(msg) {
     players = msg.players;
     updateScoreboard('#results');
     setView('resultsView');
-    //ws.close();
+    gameEnded = true;
 }
 
 function handleMessage(msgStr) {
     var msg = JSON.parse(msgStr.data);
+    console.log(msg);
 
     switch (msg.type) {
         case 'nameTaken':
