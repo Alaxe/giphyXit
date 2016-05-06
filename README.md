@@ -3,7 +3,7 @@ A web based version of the game Dixit with images from giphy.com
 
 ##How to install
   0. Install node.js 6 (follow the instruction on the
-     [website](https://nodejs.org/).
+     [website](https://nodejs.org/)).
   1. Clone the repository `git clone https://github.com/Alaxe/giphyXit`
   2. Install the dependencies with `npm install`
   3. Run the server with `node app.js`
