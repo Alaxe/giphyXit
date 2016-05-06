@@ -16,7 +16,7 @@ app.use(express.static('client'));
 
 let rooms = {};
 
-app.get('/p$', function(req, res) {
+app.get('/p?$', function(req, res) {
     key = randomstring.generate(6);
     res.redirect('/p/' + key);
 });
@@ -40,17 +40,14 @@ wss.on('connection', function(ws) {
         }
 
         if (!(msg.gameId in rooms)) {
-            console.log('creating game %s', msg.gameId);
             rooms[msg.gameId] = new Room();
             rooms[msg.gameId].on('gameEnd', () => {
-                console.log('deleting game %s', msg.gameId);
                 delete rooms[msg.gameId];
             });
         }
 
         ws.removeAllListeners('message');
         if (!rooms[msg.gameId].canJoin()) {
-            console.log('can\'t join');
             ws.close();
         } else {
             rooms[msg.gameId].addPlayer(ws, msg.name);
@@ -60,5 +57,5 @@ wss.on('connection', function(ws) {
 
 server.on('request', app);
 app.listen(port, function() {
-    console.log('listening on port ', port);
+    console.log('Server running on port ', port);
 });

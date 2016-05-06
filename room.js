@@ -7,7 +7,7 @@ var EventEmitter = require('events'),
 
 
 const MIN_PLAYERS = 3;
-const MAX_PLAYERS = 3;
+const MAX_PLAYERS = 6;
 const DECK_SIZE = 84;
 const HAND_SIZE = 6;
 const ROUND_TIMEOUT = 10;
@@ -38,13 +38,11 @@ class Room extends EventEmitter {
     }
 
     canJoin() {
-        console.log('canJoin', this.state);
         if (this.state !== RoomState.LOBBY) {
             return false;
         } else if (this.players.length >= MAX_PLAYERS) {
             return false;
         } else {
-            console.log('true');
             return true;
         }
     }

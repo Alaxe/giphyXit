@@ -91,10 +91,12 @@ function setGameInfo(info) {
 }
 function clearErrors() {
     $('#error').slideUp();
+
 }
 function error(errMsg) {
     $('#error').text(errMsg);
     $('#error').slideDown();
+    setTimeout(clearErrors, 5000);
 }
 function removeCard(id) {
     var i;
@@ -206,6 +208,7 @@ function onStartRound(msg) {
 
     updateScoreboard();
     updateHand();
+    clearErrors();
 
     if (storyTeller) {
         setGameInfo('Choose a card from your hand and describe it');
