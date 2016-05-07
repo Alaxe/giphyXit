@@ -79,7 +79,7 @@ class Room extends EventEmitter {
         }
         if (this.players.length == 0) {
             this.state = RoomState.FINISHED;
-
+            this.emit('gameEnd');
         }
     }
 
@@ -283,7 +283,7 @@ class Room extends EventEmitter {
         });
 
         this.state = RoomState.FINISHED;
-        this.emit('gameEnd', this.gameId);
+        this.emit('gameEnd');
     }
 
     sendVoteResults() {
