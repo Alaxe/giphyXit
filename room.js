@@ -1,15 +1,13 @@
-"use strict";
-var EventEmitter = require('events'),
+'use strict';
+let EventEmitter = require('events'),
     WebSocket = require('ws'),
     Player = require('./player.js'),
-    http = require('http'),
+    Deck = require('./deck.js'),
     shuffle = require('knuth-shuffle').knuthShuffle;
 
 
 const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 6;
-const DECK_SIZE = 84;
-const HAND_SIZE = 6;
 const ROUND_TIMEOUT = 10;
 
 const RoomState = {
@@ -23,7 +21,7 @@ class Room extends EventEmitter {
         super();
 
         this.players = [];
-        this.deck = [];
+        this.deck = new Deck();
         this.storyTellerInd = -1;
         this.state = RoomState.LOBBY;
 
@@ -44,15 +42,6 @@ class Room extends EventEmitter {
             return false;
         } else {
             return true;
-        }
-    }
-    canStart() {
-        if (this.state !== RoomState.LOBBY) {
-            return 'Already playing';
-        } else if (this.players.length < MIN_PLAYERS) {
-            return 'Not enough players';
-        } else {
-            return null;
         }
     }
 
@@ -83,62 +72,8 @@ class Room extends EventEmitter {
         }
     }
 
-    genDeck(callback, tags, rating) {
-        tags = tags || '';
-        rating = rating || 'g';
-
-        let self = this,
-            idSet = new Set(),
-            reqUrl = `http://api.giphy.com/v1/gifs/random?api_key` + 
-                    `=dc6zaTOxFJmzC&tag=${tags}&rating=${rating}`;
-
-        function addGif(res) {
-            let resBody = '';
-
-            if (res.statusCode != 200) {
-                http.get(reqUrl, addGif);
-            }
-
-            res.on('data', chunk => {
-                resBody += chunk;
-            });
-
-            res.on('end', () => {
-                let json = JSON.parse(resBody.toString());  
-
-                //Don't add already added cards
-                if (json.data.id in idSet) {
-                    http.get(reqUrl, addGif);
-                } else {
-                    idSet.add(json.data.id);
-                    self.deck.push(json.data);
-
-                    if (self.deck.length >= DECK_SIZE) {
-                        callback();
-                    }
-                }
-            });
-        }
-
-        for (let i = 0;i < DECK_SIZE;i++) {
-            http.get(reqUrl, addGif);
-        }
-    }
-
-    dealCards() {
-        let self = this,
-            outOfCards = false;
-
-        self.players.forEach(p => {
-            while ((self.deck.length > 0) && (p.hand.length < HAND_SIZE)) {
-                p.hand.push(self.deck[self.deck.length - 1]);
-                self.deck.pop();
-            }
-        });
-    }
-
     startRound() {
-        this.dealCards();
+        this.deck.deal(this.players);
         this.chooseCards = [];
 
         if (this.storyTellerInd >= 0) {
@@ -166,12 +101,19 @@ class Room extends EventEmitter {
     }
 
     startGame() {
-        let self = this;
-        this.state = RoomState.PLAYING;
 
-        this.genDeck(() => {
-            self.startRound();
-        });
+        if (this.state !== RoomState.LOBBY) {
+            return 'Already playing';
+        } else if (this.players.length < MIN_PLAYERS) {
+            return 'Not enough players';
+        } else if (!this.deck.isGenerated) {
+            this.deck.on('deckGenerated', this.onStartGame.bind(this));
+            return true;
+        } else {
+            this.state = RoomState.PLAYING;
+            this.startRound();
+            return true;
+        }
     }
 
     setCardDescription(card, description) {
@@ -251,19 +193,18 @@ class Room extends EventEmitter {
     }
 
     gameEnded() {
-        let answ = false;
-
-        if (this.deck.length < this.players.length) {
-            answ = true;
+        //can't deal enough cards for another round
+        //console.log(this.players.length);
+        if (!this.deck.canDeal(this.players.length)) {
+            return true;
         } else {
             this.players.forEach(p => {
                 if (p.score >= 30) {
-                    answ = true;
+                    return true;
                 }
             });
+            return false;
         }
-
-        return answ;
     } 
 
     endGame() {
@@ -344,6 +285,6 @@ class Room extends EventEmitter {
             }
         }, ROUND_TIMEOUT * 1000);
     }
-};
+}
 
 module.exports = Room;

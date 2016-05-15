@@ -5,7 +5,7 @@ let server = require('http').createServer(),
 
     express = require('express'),  
     app = express(),
-    port = 6000,
+    port = 8000,
     randomstring = require('randomstring'),
     Room = require('./room.js');
 
@@ -17,7 +17,7 @@ app.use(express.static('client'));
 let rooms = {};
 
 app.get('/p?$', function(req, res) {
-    key = randomstring.generate(6);
+    key = randomstring.generate(8);
     res.redirect('/p/' + key);
 });
 app.get('/p/:room', function(req, res) {

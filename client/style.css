@@ -1,0 +1,50 @@
+.panel-center {
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+textarea {
+    width: 100%;
+    resize: none;
+}
+.card {
+    margin: 5px;
+    width: 210px;
+    box-sizing: border-box;
+    display: inline-block;
+
+    border-color: rgba(0, 0, 0, 0);
+    border-style: solid;
+    border-width: 2px;
+    vertical-align: top;
+}
+.card > .panel-body {
+    padding: 3px;
+}
+.card > .panel-body > img {
+    display: block;
+    width: 200px;
+}
+
+
+.card.active {
+    border-color: #2196f3;
+}
+.card.correct {
+    border-color: #4caf50;
+}
+.card.yours {
+    border-color: #9c27b0;
+}
+.card.wrong {
+    border-color: #e51c23;
+}
+
+.author-info {
+    font-size: medium;
+    margin-left: 5px;
+}
+.container-fluid {
+    padding-top: 10px;
+}
+

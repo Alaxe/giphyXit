@@ -45,11 +45,9 @@ class Player extends EventEmitter {
         this.ws.send(msgText);
     }
 
-    startGame(msg) {
-        let error = this.room.canStart();
-        if (!error) {
-            this.room.startGame();
-        } else {
+    onStartGame(msg) {
+        let error = this.room.startGame();
+        if (error !== true) {
             this.sendError(error);
         }
     }
@@ -59,14 +57,12 @@ class Player extends EventEmitter {
             this.sendError('Umm, only the story teller can describe' +
                     'cards and you don\'t look like them.' +
                     'Nice try anyways, you cheat');
-            return;
-        }
-        if (!card) {
+        } else if (!card) {
             this.sendError('Umm, you don\'t have that card.');
-            return;
+        } else {
+            this.removeCard(msg.id);
+            this.room.setCardDescription(card, msg.text);
         }
-        this.removeCard(msg.id);
-        this.room.setCardDescription(card, msg.text);
     }
     playCard(msg) {
         let card = this.getCardById(msg.id);
@@ -103,7 +99,7 @@ class Player extends EventEmitter {
         let msg = JSON.parse(msgStr);
         switch (msg.type) {
             case 'startGame': 
-                this.startGame(msg);
+                this.onStartGame(msg);
                 break;
             case 'describeCard':
                 this.describeCard(msg);          

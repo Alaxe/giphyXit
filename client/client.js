@@ -143,7 +143,7 @@ function onJoinFormSubmit() {
     };
     ws.onmessage = handleMessage;
 
-    ws.onerror = ws.onclose = function() {
+    ws.onerror = function() {
         window.location.pathname = '/p';
         console.log('hi');
     };
