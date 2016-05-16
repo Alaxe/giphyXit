@@ -5,7 +5,7 @@ let server = require('http').createServer(),
 
     express = require('express'),  
     app = express(),
-    port = 8000,
+    port = 6000,
     randomstring = require('randomstring'),
     Room = require('./room.js');
 
