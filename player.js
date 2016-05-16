@@ -3,23 +3,40 @@ var EventEmitter = require('events'),
     Room = require('./room.js');
 
 class Player extends EventEmitter {
-    constructor(room, ws, name) {
+    constructor(ws, name) {
         super();
-
-        this.room = room;
         this.ws = ws;
 
         this.name = name;
         this.score = 0;
+        this.scoreChange = 0;
         this.storyTeller = false;
+        this.playedCard = false;
         this.voteId = '';
         this.hand = [];
 
-
+        let self = this;
         this.ws.on('close', () => {
-            room.removePlayer(this);
+            self.emit('disconnect');
         });
-        this.ws.on('message', this.handleMessage.bind(this));
+
+        this.ws.on('message', (msgStr) => {
+            let msg = JSON.parse(msgStr);
+            switch (msg.type) {
+                case 'startGame': 
+                    self.onStartGame(msg);
+                    break;
+                case 'describeCard':
+                    self.describeCard(msg);          
+                    break;
+                case 'playCard':
+                    self.playCard(msg);
+                    break;
+                case 'vote':
+                    self.vote(msg);
+                    break;
+           }
+        });
     }
 
     getCardById(id) {
@@ -46,10 +63,11 @@ class Player extends EventEmitter {
     }
 
     onStartGame(msg) {
-        let error = this.room.startGame();
+        this.emit('startGame');
+        /*let error = this.room.startGame();
         if (error !== true) {
             this.sendError(error);
-        }
+        }*/
     }
     describeCard(msg) {
         let card = this.getCardById(msg.id);
@@ -61,7 +79,8 @@ class Player extends EventEmitter {
             this.sendError('Umm, you don\'t have that card.');
         } else {
             this.removeCard(msg.id);
-            this.room.setCardDescription(card, msg.text);
+            this.emit('describeCard', card, msg.text);
+            //this.room.setCardDescription(card, msg.text);
         }
     }
     playCard(msg) {
@@ -69,47 +88,23 @@ class Player extends EventEmitter {
 
         if (this.storyTeller) {
             this.sendError('Umm, story teller can\'t play cards.');
-            return;
-        }
-        if (this.hand.length < Room.HAND_SIZE) {
+        } else if (this.playedCard) {
             this.sendError('Umm, you\'ve already played a card');
-            return;
-        }
-        if (!card) {
+        } else if (!card) {
             this.sendError('Umm, you actually don\'t have that card');
-            return
+        } else {
+            this.playedCard = true;
+            this.emit('playCard', card);
+            this.removeCard(msg.id);
         }
-
-        this.room.playCard(this, card);
-        this.removeCard(msg.id);
     }
+
     vote(msg) {
         if (this.voteId != '') {
             return;
         }
         this.voteId = msg.id;
-        this.room.votesLeft--;
-
-        if (this.room.votesLeft == 0) {
-            this.room.sendVoteResults();
-        }
-    }
-
-    handleMessage(msgStr) {
-        let msg = JSON.parse(msgStr);
-        switch (msg.type) {
-            case 'startGame': 
-                this.onStartGame(msg);
-                break;
-            case 'describeCard':
-                this.describeCard(msg);          
-                break;
-            case 'playCard':
-                this.playCard(msg);
-                break;
-            case 'vote':
-                this.vote(msg);
-       }
+        this.emit('vote');
     }
 }
 

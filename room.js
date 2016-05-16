@@ -8,6 +8,7 @@ let EventEmitter = require('events'),
 
 const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 6;
+const MAX_SCORE = 30;
 const ROUND_TIMEOUT = 10;
 
 const RoomState = {
@@ -31,10 +32,6 @@ class Room extends EventEmitter {
         this.votesLeft = 0;
     }
 
-    static get HAND_SIZE() {
-        return HAND_SIZE;
-    }
-
     canJoin() {
         if (this.state !== RoomState.LOBBY) {
             return false;
@@ -47,6 +44,7 @@ class Room extends EventEmitter {
 
     addPlayer(ws, userName) {
         let taken = false;
+
         for(let i = 0;i < this.players.length;i++) {
             if (this.players[i].name === userName) {
                 taken = true;
@@ -56,9 +54,53 @@ class Room extends EventEmitter {
         if (taken) {
             ws.send(JSON.stringify({type: 'nameTaken'}));
         } else {
-            this.players.push(new Player(this, ws, userName));
+            let player = new Player(ws, userName);
+
+            this.addPlayerListeners(player);
+            this.players.push(player);
             this.sendPlayers();
         }
+    }
+    addPlayerListeners(player) {
+        let self = this;
+
+        player.on('disconnect', () => {
+            self.removePlayer(player);
+        });
+        player.on('startGame', () => {
+            let err = self.startGame();
+            if (err !== true) {
+                player.sendError(err);
+            }
+        });
+        player.on('describeCard', (card, description) => {
+            self.describeId = card.id;
+            self.describeText = description;
+
+            self.chooseCards.push({
+                player: self.players[self.storyTellerInd],
+                card: card
+            });
+            self.sendCardDescription();
+        });
+
+        player.on('playCard', (card) => {
+            self.chooseCards.push({
+                player: player,
+                card: card
+            });
+
+            if (self.chooseCards.length == self.players.length) {
+                self.sendChooseCards();
+            }
+        });
+        player.on('vote', () => {
+            self.votesLeft--;
+
+            if (self.votesLeft == 0) {
+                self.sendVoteResults();
+            }
+        });
     }
     removePlayer(player) {
         let index = this.players.indexOf(player);
@@ -85,6 +127,7 @@ class Room extends EventEmitter {
         }
         this.players.forEach(p => {
             p.voteId = '';
+            p.playedCard = false;
         });
         this.players[this.storyTellerInd].storyTeller = true;
 
@@ -101,7 +144,6 @@ class Room extends EventEmitter {
     }
 
     startGame() {
-
         if (this.state !== RoomState.LOBBY) {
             return 'Already playing';
         } else if (this.players.length < MIN_PLAYERS) {
@@ -116,15 +158,7 @@ class Room extends EventEmitter {
         }
     }
 
-    setCardDescription(card, description) {
-        this.describeId = card.id;
-        this.describeText = description;
-
-        this.chooseCards.push({
-            player: this.players[this.storyTellerInd],
-            card: card
-        });
-
+    sendCardDescription(card, description) {
         let msgStr = JSON.stringify({
             type: 'describeCard',
             text: this.describeText
@@ -137,32 +171,24 @@ class Room extends EventEmitter {
         });
     }
 
-    playCard(player, card) { 
-        this.chooseCards.push({
-            player: player,
-            card: card
+    sendChooseCards() {
+        shuffle(this.chooseCards);
+        this.votesLeft = this.players.length - 1;
+        
+        //Don't send the clients info about who played the cards
+        let cleanCards = [];
+        this.chooseCards.forEach(c => {
+            cleanCards.push(c.card);
         });
 
+        let msg = JSON.stringify({
+            type: 'chooseCard',
+            cards: cleanCards
+        });
 
-        if (this.chooseCards.length == this.players.length) {
-            shuffle(this.chooseCards);
-            this.votesLeft = this.players.length - 1;
-            
-            //Don't send the clients info about who played the cards
-            let cleanCards = [];
-            this.chooseCards.forEach(c => {
-                cleanCards.push(c.card);
-            });
-
-            let msg = JSON.stringify({
-                type: 'chooseCard',
-                cards: cleanCards
-            });
-
-            this.players.forEach(p => {
-                p.ws.send(msg);
-            });
-        }
+        this.players.forEach(p => {
+            p.ws.send(msg);
+        });
     }
 
     getPlayerList() {
@@ -172,6 +198,7 @@ class Room extends EventEmitter {
             playerList.push({
                 name: p.name,
                 score: p.score,
+                scoreChange: p.scoreChange,
                 storyTeller: p.storyTeller
             });
         });
@@ -191,22 +218,19 @@ class Room extends EventEmitter {
             }
         });
     }
-
     gameEnded() {
         //can't deal enough cards for another round
-        //console.log(this.players.length);
         if (!this.deck.canDeal(this.players.length)) {
             return true;
         } else {
             this.players.forEach(p => {
-                if (p.score >= 30) {
+                if (p.score >= MAX_SCORE) {
                     return true;
                 }
             });
             return false;
         }
     } 
-
     endGame() {
         this.players[this.storyTellerInd].storyTeller = false;
         this.players.sort((a, b) => {
@@ -227,6 +251,46 @@ class Room extends EventEmitter {
         this.emit('gameEnd');
     }
 
+    calculateScoreChange(votesById) {
+        let guessedCnt = 0;
+
+        this.players.forEach(p => {
+            this.scoreChange = 0;
+            if (p.voteId == this.describeId) {
+                guessedCnt++;
+            }
+        });
+
+        if ((guessedCnt == 0) || (guessedCnt == this.players.length - 1)) {
+            //If all or no players have guessed, everybody except the story 
+            //teller receives 2 points
+
+            this.players.forEach(p => {
+                if (!p.storyTeller) {
+                    p.score += 2;
+                    p.scoreChange += 2;
+                }
+            });
+        } else {
+            //Otherwise the story teller and the correctlly-guessed players 
+            //receive 3 points and every non-story-teller receives 1 point for 
+            //every person, who has voted for their card.
+
+            this.players.forEach(p => {
+                if ((p.storyTeller) || (p.voteId == this.describeId)) {
+                    p.score += 3;
+                    p.scoreChange += 3;
+                }
+            });
+            this.chooseCards.forEach(c => {
+                if (!c.player.storyTeller) {
+                    c.player.score += votesById[c.card.id].votes.length;
+                    c.player.scoreChange += votesById[c.card.id].votes.length;
+                }
+            });
+        }
+    }
+
     sendVoteResults() {
         let votesById = {};
         this.chooseCards.forEach(c => {
@@ -236,47 +300,27 @@ class Room extends EventEmitter {
             };
         })
 
-        let guessedCnt = 0;
         this.players.forEach(p => {
-            if (p.voteId in votesById) {
-                if (p.voteId == this.describeId) {
-                    guessedCnt++;
-                }
+            if (!p.storyTeller) {
                 votesById[p.voteId].votes.push(p.name);
             }
         });
 
+        this.calculateScoreChange(votesById);
+
         let msg = JSON.stringify({
             type: 'voteResults',
             votesById: votesById,
+            players: this.getPlayerList(),
             correctId: this.describeId
         });
+
         this.players.forEach(p => {
             p.ws.send(msg);
         });
         
-        if ((guessedCnt == 0) || (guessedCnt == this.players.length - 1)) {
-            this.players.forEach(p => {
-                if (!p.storyTeller) {
-                    p.score += 2;
-                }
-            });
-        } else {
-            this.players.forEach(p => {
-                if (p.storyTeller) {
-                    p.score += 3;
-                } else if (p.voteId == this.describeId) {
-                    p.score += 3;
-                }
-            });
-            this.chooseCards.forEach(c => {
-                if (!c.player.storyTeller) {
-                    c.player.score += votesById[c.card.id].votes.length;
-                }
-            });
-        }
-
         let self = this;
+
         setTimeout(() => {
             if (self.gameEnded()) {
                 self.endGame();

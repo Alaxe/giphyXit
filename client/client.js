@@ -14,13 +14,14 @@ var curView = null,
     hand = [],
     voteList = [];
 
+//Display functions - they handle the appearance of the web page
 function setView(view) {
     $('.view').hide();
     $('#' + view).show();
 
     curView = view;
 }
-function updatePlayerList() {
+function displayPlayerList() {
     var waitTable = $('#playerList > tbody'),
         row = null,
         cell = null;
@@ -35,7 +36,7 @@ function updatePlayerList() {
             .appendTo(row);
     });
 }
-function updateScoreboard(container) {
+function displayScoreboard(container) {
     container = container || '#scoreboard';
     var scoreboard = $(container + ' > tbody'),
         row = null,
@@ -55,6 +56,11 @@ function updateScoreboard(container) {
             .text(player.score)
             .appendTo(row);
 
+        if ((player.scoreChange > 0) && (container == '#scoreboard')) {
+            scoreCell.text(player.score + ' (+' + player.scoreChange + 
+                           ' last round)');
+        }
+
         if (player.storyTeller) {
             storyTellerBadge = $('<span></span>')
                 .text('ST')
@@ -63,7 +69,7 @@ function updateScoreboard(container) {
         }
     });
 }
-function updateCardList(container, cardList) {
+function displayCardList(container, cardList) {
     var cardPanel = null,
         panelBody = null;
 
@@ -82,6 +88,89 @@ function updateCardList(container, cardList) {
     });
 
 }
+function displayHand() {
+    var handDiv = $('#hand');
+
+    displayCardList(handDiv, hand);
+
+    handDiv.children().click(function() {
+        handDiv.children().removeClass('active');
+        $(this).addClass('active');
+    });
+}
+function displayVoteList() {
+    var voteDiv = $('#voteList');
+    
+    displayCardList(voteDiv, voteList);
+
+    $('#voteList').children().each(function () {
+        if ($(this).data('cardId') == playedCardId) {
+            $(this).addClass(storyTeller ? 'correct' : 'yours');
+        }
+    });
+    if (!storyTeller) {
+        voteDiv.children().click(function() {
+            if ($(this).data('cardId') == playedCardId) {
+                return;
+            }
+            if (votedId != '') {
+                return;
+            }
+
+            voteDiv.children().removeClass('active');
+            $(this).addClass('active');
+        });
+    }
+}
+function displayVoteResults(msg) {
+    $('#voteList').children().each(function() {
+        var curId = $(this).data('cardId'),
+            authorDiv = $('<div></div>')
+                .addClass('author-info')
+                .appendTo($(this)),
+            votedTable = null,
+            thead = null,
+            tr = null,
+            tbody = null;
+
+        if (curId == msg.correctId) {
+            $(this).addClass('correct');
+            authorDiv.text('Story teller\'s card');
+        } else {
+            if (curId == votedId) {
+                $(this).removeClass('active');
+                $(this).removeClass('wrong');
+            }
+            authorDiv.text(msg.votesById[curId].player + '\'s card');
+        }
+
+        if (msg.votesById[curId].votes.length == 0) {
+            return;
+        }
+
+        votedTable = $('<table></table>')
+            .addClass('table')
+            .appendTo($(this));
+        thead = $('<thead></thead>')
+            .appendTo(votedTable);
+        tr = $('<tr></tr>')
+            .appendTo(thead);
+        $('<th></th>')
+            .text('Players voted:')
+            .appendTo(tr);
+        tbody = $('<tbody></tbody>').
+            appendTo(votedTable);
+
+        msg.votesById[curId].votes.forEach(function(name) {
+            tr = $('<tr></tr>')
+                .appendTo(tbody);
+            $('<td></td>')
+                .text(name == userName ? 'You' : name)
+                .appendTo(tr);
+        })
+    });
+}
+
 function setDescription(desc) {
     desc = desc || 'Waiting for the story teller to describe a card';
     $('#cardDescritpion').text(desc);
@@ -91,20 +180,19 @@ function setGameInfo(info) {
 }
 function clearErrors() {
     $('#error').slideUp();
-
 }
 function error(errMsg) {
     $('#error').text(errMsg);
     $('#error').slideDown();
     setTimeout(clearErrors, 5000);
 }
+
 function removeCard(id) {
     var i;
     for (i = 0;i < hand.length;i++) {
         if (hand[i].id == id) {
             hand.splice(i, 1);
-            updateHand();
-            //updateCardList('#hand', hand);
+            displayHand();
             return true;
         }
     }
@@ -189,16 +277,6 @@ function onDescriptionFormSubmit() {
 
     return false;
 }
-function updateHand() {
-    var handDiv = $('#hand');
-
-    updateCardList(handDiv, hand);
-
-    handDiv.children().click(function() {
-        handDiv.children().removeClass('active');
-        $(this).addClass('active');
-    });
-}
 function onStartRound(msg) {
     hand = msg.hand;
     storyTeller = msg.storyTeller;
@@ -206,8 +284,8 @@ function onStartRound(msg) {
 
     playedCardId = votedId = '';
 
-    updateScoreboard();
-    updateHand();
+    displayScoreboard();
+    displayHand();
     clearErrors();
 
     if (storyTeller) {
@@ -227,9 +305,9 @@ function onStartRound(msg) {
 function onUpdatePlayers(msg) {
     players = msg.players;
     if (curView == 'playView') {
-        updateScoreboard();
+        displayScoreboard();
     } else if (curView == 'waitView') {
-        updatePlayerList();
+        displayPlayerList();
     }
 }
 function onPlayCardClick() {
@@ -255,30 +333,6 @@ function onDescribeCard(msg) {
 
     $('#playCardDiv').show();
 }
-function updateVoteList() {
-    var voteDiv = $('#voteList');
-    
-    updateCardList(voteDiv, voteList);
-
-    $('#voteList').children().each(function () {
-        if ($(this).data('cardId') == playedCardId) {
-            $(this).addClass(storyTeller ? 'correct' : 'yours');
-        }
-    });
-    if (!storyTeller) {
-        voteDiv.children().click(function() {
-            if ($(this).data('cardId') == playedCardId) {
-                return;
-            }
-            if (votedId != '') {
-                return;
-            }
-
-            voteDiv.children().removeClass('active');
-            $(this).addClass('active');
-        });
-    }
-}
 function onChooseCardClick() {
     var curId = getSelectedId('#voteList');
 
@@ -300,7 +354,7 @@ function onChooseCardClick() {
 }
 function onChooseCard(msg) {
     voteList = msg.cards;
-    updateVoteList();
+    displayVoteList();
 
     $('#chooseCardPanel').show();
     if (storyTeller) {
@@ -312,58 +366,17 @@ function onChooseCard(msg) {
 }
 function onVoteResults(msg) {
     var guessed = false;
-    $('#voteList').children().each(function() {
-        var curId = $(this).data('cardId'),
-            authorDiv = $('<div></div>')
-                .addClass('author-info')
-                .appendTo($(this)),
-            votedTable = null,
-            thead = null,
-            tr = null,
-            tbody = null;
 
-        if (curId == msg.correctId) {
-            $(this).addClass('correct');
-            authorDiv.text('Story teller\'s card');
-        } else {
-            if (curId == votedId) {
-                $(this).removeClass('active');
-                $(this).removeClass('wrong');
-            }
-            authorDiv.text(msg.votesById[curId].player + '\'s card');
-        }
+    players = msg.players;
 
-        if (msg.votesById[curId].votes.length == 0) {
-            return;
-        }
+    displayVoteResults(msg);
+    displayScoreboard();
 
-        votedTable = $('<table></table>')
-            .addClass('table')
-            .appendTo($(this));
-        thead = $('<thead></thead>')
-            .appendTo(votedTable);
-        tr = $('<tr></tr>')
-            .appendTo(thead);
-        $('<th></th>')
-            .text('Players voted:')
-            .appendTo(tr);
-        tbody = $('<tbody></tbody>').
-            appendTo(votedTable);
-
-        msg.votesById[curId].votes.forEach(function(name) {
-            tr = $('<tr></tr>')
-                .appendTo(tbody);
-            $('<td></td>')
-                .text(name == userName ? 'You' : name)
-                .appendTo(tr);
-        })
-    });
     setGameInfo('Look at who voted how and wait for the start of the next round');
-
 }
 function onGameEnded(msg) {
     players = msg.players;
-    updateScoreboard('#results');
+    displayScoreboard('#results');
     setView('resultsView');
     gameEnded = true;
 }
@@ -411,5 +424,4 @@ $(function() {
     $('#descriptionForm').submit(onDescriptionFormSubmit);
     $('#playCard').click(onPlayCardClick);
     $('#chooseCard').click(onChooseCardClick);
-
 });
