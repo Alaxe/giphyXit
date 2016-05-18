@@ -255,7 +255,7 @@ class Room extends EventEmitter {
         let guessedCnt = 0;
 
         this.players.forEach(p => {
-            this.scoreChange = 0;
+            p.scoreChange = 0;
             if (p.voteId == this.describeId) {
                 guessedCnt++;
             }
