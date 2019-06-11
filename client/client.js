@@ -213,7 +213,7 @@ function getSelectedId(listId) {
 function onJoinFormSubmit() {
     userName = $('#nameInput').val();
     if (userName == '') {
-        error('One needs an username');
+        error('One needs a username');
         return false;
     } else {
         clearErrors();
@@ -233,7 +233,6 @@ function onJoinFormSubmit() {
 
     ws.onerror = function() {
         window.location.pathname = '/p';
-        console.log('hi');
     };
     
     //makes sure the form isn't actually submited
@@ -416,6 +415,7 @@ function handleMessage(msgStr) {
 $(function() {
     setView('joinView');
     gameId = document.URL.substr(document.URL.lastIndexOf('/') + 1);
+
 
     $('#joinForm').submit(onJoinFormSubmit);
     $('#startGame').click(function() {

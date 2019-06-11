@@ -1,11 +1,13 @@
+const conf = require('./conf.json');
+
 let server = require('http').createServer(),
     WebSocketServer = require('ws').Server,
     url = require('url'),
-    wss = new WebSocketServer({server: server, port: 8080}),
+    wss = new WebSocketServer({server: server, port: conf.WS_PORT}),
 
-    express = require('express'),  
+    express = require('express'),
     app = express(),
-    port = 6000,
+    port = conf.WEB_PORT,
     randomstring = require('randomstring'),
     Room = require('./room.js');
 

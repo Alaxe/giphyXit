@@ -1,10 +1,10 @@
 'use strict';
+const conf = require('./conf.json');
 let EventEmitter = require('events'),
     http = require('http');
 
 const DECK_SIZE = 84;
 const HAND_SIZE = 6;
-const API_KEY = 'dc6zaTOxFJmzC';
 
 class Deck extends EventEmitter {
     constructor() {
@@ -13,9 +13,9 @@ class Deck extends EventEmitter {
         this.deck = [];
         this.idSet = new Set();
         this.isGenerated = false;
-        this.requestUrl = `http://api.giphy.com/v1/gifs/random?api_key=` + 
-                `${API_KEY}&rating=g`;
-
+        console.log(conf.API_KEY);
+        this.requestUrl = `http://api.giphy.com/v1/gifs/random?api_key=` +
+                `${conf.API_KEY}&rating=g`;
         this.generateDeck();
     }
 
@@ -35,7 +35,8 @@ class Deck extends EventEmitter {
 
 
             response.on('end', () => {
-                let json = JSON.parse(responseBody.toString());  
+                let json = JSON.parse(responseBody.toString());
+                console.log(json);
 
                 //Don't add already added cards
                 if (json.data.id in self.idSet) {
@@ -54,6 +55,7 @@ class Deck extends EventEmitter {
 
         for (let i = 0;i < DECK_SIZE;i++) {
             http.get(this.requestUrl, addGif);
+            console.log(this.requestUrl);
         }
     }
 

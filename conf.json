@@ -1,0 +1,5 @@
+{
+    "API_KEY": "",
+    "WEB_PORT": 6001,
+    "WS_PORT": 8080
+}
